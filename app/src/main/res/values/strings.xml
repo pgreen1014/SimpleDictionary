@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">SimpleDictionary</string>
+    <string name="search_screen_form_error_invalid_search">Please enter a word to search</string>
+    <string name="error_no_internet">No internet connection. Please check your network and try again.</string>
+    <string name="error_word_not_found">We couldn\'t find that word. Please check the spelling and try again.</string>
+    <string name="error_unexpected">An unexpected error occurred. Please try again later.</string>
+</resources>
