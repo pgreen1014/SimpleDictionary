@@ -8,9 +8,11 @@ import com.gishlabs.simpledictionary.domain.models.SearchError
 import com.gishlabs.simpledictionary.domain.models.SearchResult
 import com.gishlabs.simpledictionary.domain.models.WordEntry
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -22,7 +24,6 @@ sealed class SearchUiState {
     ) : SearchUiState()
     data object Loading : SearchUiState()
     data class Error(val messageRes: Int) : SearchUiState()
-    data class Success(val result: WordEntry) : SearchUiState() // This will display in a different screen, should this be a state?
 }
 
 @HiltViewModel
@@ -32,6 +33,8 @@ class SearchViewModel @Inject constructor(
 
     private val _uiState: MutableStateFlow<SearchUiState> = MutableStateFlow(SearchUiState.Idle())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
+    private val _searchEvent = Channel<WordEntry>(Channel.BUFFERED)
+    val searchEvent = _searchEvent.receiveAsFlow()
 
     fun search(word: String) {
         if (word.isBlank()) {
@@ -51,7 +54,8 @@ class SearchViewModel @Inject constructor(
                 }
                 is SearchResult.Success -> {
                     Timber.d("${result.wordEntry}")
-                    _uiState.update { SearchUiState.Success(result.wordEntry) }
+                    _uiState.update { SearchUiState.Idle() }
+                    _searchEvent.send(result.wordEntry)
                 }
             }
         }

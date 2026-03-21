@@ -22,6 +22,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,28 +33,38 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.gishlabs.simpledictionary.R
+import com.gishlabs.simpledictionary.domain.models.WordEntry
 import com.gishlabs.simpledictionary.presentation.theme.SimpleDictionaryTheme
 import com.gishlabs.simpledictionary.presentation.ui.components.ErrorMessage
 import timber.log.Timber
 
 @Composable
 fun SearchScreen(
-    searchViewModel: SearchViewModel = hiltViewModel()
+    searchViewModel: SearchViewModel = hiltViewModel(),
+    onSearchSuccess: (WordEntry) -> Unit
 ) {
     val screenState = searchViewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) {
+        searchViewModel.searchEvent.collect { wordEntry ->
+            onSearchSuccess(wordEntry)
+        }
+    }
+
     SearchScreen(
         screenState = screenState.value,
-        onLookupWord = { word -> searchViewModel.search(word) }
+        onLookupWord = { word ->
+            searchViewModel.search(word)
+        }
     )
 }
 
 @Composable
 private fun SearchScreen(
     screenState: SearchUiState,
-    onLookupWord: (String) -> Unit
+    onLookupWord: (String) -> Unit,
 ) {
     Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
         Box(
@@ -86,13 +97,6 @@ private fun SearchScreen(
                         modifier = Modifier.width(64.dp),
                         color = MaterialTheme.colorScheme.secondary,
                         trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                    )
-                }
-                is SearchUiState.Success -> {
-                    Timber.d("Search - Success")
-                    SearchTextField(
-                        formError = null,
-                        onLookupWord = { onLookupWord(it) }
                     )
                 }
             }
